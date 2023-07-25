@@ -1,57 +1,52 @@
 import arcpy,os
 from arcpy.sa import *
-arcpy.env.overwriteOutput = True
-inputDatos= input("Introduce la ruta de tu carpeta de datos con los que vas a trabajar: ")
-carpetaDatosSHP = inputDatos
-# print(carpetaDatosSHP)
-inputGDB= input("Introduce el nombre de tu GDB con la que vas a trabajar: ")
-miGDB = os.path.join(carpetaDatosSHP, "{}.gdb".format(inputGDB))
-print(miGDB)
-### Creando una GDB ###
-if  arcpy.Exists(miGDB):
-    print("Tu gdb ya existe, vamos a hacerle un vaciado de seguridad")
-    ### Vaciado de seguridad de la gdb###
-    arcpy.env.workspace = miGDB
-    featureclassesExistentes = arcpy.ListFeatureClasses()
-    for featureClass in featureclassesExistentes:
-        arcpy.management.DeleteFeatures(featureClass)
-else:
-    print("Tu gdb no existe")
-    inputNewGDB= input("Introduce la ruta de la GDB  que vas a crear: ")
-    newGDB = inputNewGDB
-    print(newGDB)
-    inpuntNameGDB=input("Introduce el nombre de la GDB que vas a crear: ")
-    newName= "{}.gdb".format(inpuntNameGDB)
-    print(newName)
-    arcpy.management.CreateFileGDB(newGDB,newName)
+def gestionar_gdb(ruta_datos, nombre_gdb):
+    carpeta_datos_shp = ruta_datos
+    mi_gdb = os.path.join(carpeta_datos_shp, "{}.gdb".format(nombre_gdb))
+    print(mi_gdb)
 
-    print("Se ha creado una .gdb con el nombre: {}".format(inpuntNameGDB))
+    if arcpy.Exists(mi_gdb):
+        print("Tu gdb ya existe")
+        vaciado = input("¿Quieres hacerle un vaciado de seguridad,(Responde usando mayusculas)")
+        if vaciado == 'SI':
+            arcpy.env.workspace = mi_gdb
+            featureclasses_existentes = arcpy.ListFeatureClasses()
+            for featureClass in featureclasses_existentes:
+                arcpy.management.DeleteFeatures(featureClass)
+        elif vaciado == 'NO':
+            pass
+    else:
+        print("Tu gdb no existe")
+        input_new_gdb = input("Introduce la ruta de la GDB  que vas a crear: ")
+        new_gdb = input_new_gdb
+        print(new_gdb)
+        input_name_gdb = input("Introduce el nombre de la GDB que vas a crear: ")
+        new_name = "{}.gdb".format(input_name_gdb)
+        print(new_name)
+        arcpy.management.CreateFileGDB(new_gdb, new_name)
+        print("Se ha creado una .gdb con el nombre: {}".format(input_name_gdb))
 
-### Configurando el espacio de trabajo ###
-arcpy.env.workspace = carpetaDatosSHP
-featureclasses = arcpy.ListFeatureClasses()
+        arcpy.env.workspace = carpeta_datos_shp
+        featureclasses = arcpy.ListFeatureClasses()
 
-# Imprimir todas las capas disponibles con su índice
-for index, feature in enumerate(featureclasses):
-    print(f'[{index}] {feature} ')
+        for index, feature in enumerate(featureclasses):
+            print(f'[{index}] {feature} ')
 
-# Pedir al usuario que ingrese los índices de las capas que quiere utilizar
-indices_capas_uso = input("Introduce los índices de las capas que quieres utilizar, separados por comas: ")
+        indices_capas = input('Introduce los índices de las capas que quieres usar, separados por comas: ')
+        indices_capas_uso = [int(indice.strip()) for indice in indices_capas.split(',')]
 
-# Convertir la entrada del usuario en una lista de índices
-indices_capas_uso = [int(indice.strip()) for indice in indices_capas_uso.split(',')]
+        lista_names = []
+        lista_path = []
+        for indice in indices_capas_uso:
+            capa = featureclasses[indice].replace('.shp', '')
+            control = os.path.basename(capa)
+            control = control.replace('(', '_').replace(')', '_')
+            out_featureclass = os.path.join(mi_gdb, control)
+            lista_path.append(out_featureclass)
+            print(lista_path[-1])
+            arcpy.management.CopyFeatures(capa, out_featureclass)
 
-# Seleccionar e importar capas en la GDB de acuerdo a los índices proporcionados por el usuario
-listaNames=[]
-listaPath = []
-for indice in indices_capas_uso:
-    capa = featureclasses[indice].replace('.shp', '')
-    # Reemplazar los paréntesis por guiones bajos en el nombre de la capa
-    control = os.path.basename(capa)
-    control = control.replace('(', '_').replace(')', '_')
-    out_featureclass = os.path.join(miGDB, control)
-    listaPath.append(out_featureclass)
-    print(listaPath[-1])
-    arcpy.management.CopyFeatures(capa, out_featureclass)
+        print("Elementos copiados en la gdb")
 
-print("Elementos copiados en la gdb")
+
+config = gestionar_gdb(r"C:\Users\usuario\Documents\ArcGIS\Projects\Pythoneo\Data\BTN","Colomera")
