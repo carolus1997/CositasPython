@@ -59,7 +59,6 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
         indices_capas = input('Introduce los índices de las capas que quieres usar, separados por comas: ')
         indices_capas_uso = [int(indice.strip()) for indice in indices_capas.split(',')]
 
-        lista_names = []
         lista_path = []
         for indice in indices_capas_uso:
             capa = featureclasses[indice].replace('.shp', '')
