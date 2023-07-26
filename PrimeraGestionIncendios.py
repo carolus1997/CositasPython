@@ -63,7 +63,7 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
         for indice in indices_capas_uso:
             capa = featureclasses[indice].replace('.shp', '')
             control = os.path.basename(capa)
-            control = control.replace('(', '_').replace(')', '_')
+            control = control.replace('(', '_').replace(')', '_').replace('-', '_')
             out_featureclass = os.path.join(mi_gdb, control)
             lista_path.append(out_featureclass)
             print(lista_path[-1])
@@ -72,4 +72,4 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
         print("Elementos copiados en la gdb")
 
 
-config = gestionar_gdb(r"C:\Users\usuario\Documents\ArcGIS\Projects\Pythoneo\Data\BTN","Colomera")
+config = gestionar_gdb(r"C:\Users\carlos.mira-perceval\OneDrive - ESRI ESPAÑA Soluciones Geoespaciales S.L\Documentos\ArcGIS\Projects\Demos_Cursos\CurvasNivel","CurvasNivelPruebaDEM")
