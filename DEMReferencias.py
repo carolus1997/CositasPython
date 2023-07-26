@@ -15,16 +15,18 @@ print(feature_classes)
 # Lista para guardar las capas para fusionar
 layers_to_merge = []
 for feature in feature_classes:
-    if "NIV" in feature: #Aqui hay que añadir que tiene que poner cual es el elemento que más se repite en sus curvas de nivel
+    if "NIV" in feature or "contour" in feature: #Aqui hay que añadir que tiene que poner cual es el elemento que más se repite en sus curvas de nivel
         # Agrega la capa a la lista de capas para fusionar
         layers_to_merge.append(feature)
-        if len(layers_to_merge)>1:# Fusiona las capas
-            output_layer = os.path.join(miGDB,"CurvasNivelTotal") # Cambia esto a la ruta de salida que desees
-            arcpy.Merge_management(layers_to_merge, output_layer)
-            print("Curvas de nivel {} combiandas".format(layers_to_merge[-1]))
-        else:
-            output_layer = os.path.join(miGDB, "CurvasNivelTotal")
-            print("Solo hay una capa")
+
+# Fusiona las capas después de que todas las capas hayan sido agregadas a la lista
+if len(layers_to_merge)>1:
+    output_layer = os.path.join(miGDB,"CurvasNivelTotal") # Cambia esto a la ruta de salida que desees
+    arcpy.Merge_management(layers_to_merge, output_layer)
+    print("Curvas de nivel combinadas")
+else:
+    output_layer = os.path.join(miGDB, "CurvasNivelTotal")
+    print("Solo hay una capa")
 
 # Obtener los nombres de los campos en la clase de entidad fusionada
 feature_classes = arcpy.ListFeatureClasses()
@@ -41,11 +43,19 @@ for capa in feature_classes:
         # DEM.save(os.path.join(ruta_de_datos, "{}.tif".format(feature)))
         arcpy.conversion.RasterToGeodatabase(DEM, arcpy.env.workspace)
 #Una vez creado el DEM, creamos el Hillshade y Slope
+    #Hillshade
     rasters = arcpy.ListRasters("*", "All")
     for raster in rasters:
-        outHillshade = Hillshade(raster, "", "", "SHADOWS", 1)
+        outHillshade = Hillshade(raster)
         # outHillshade.save(os.path.join(ruta_de_datos, "{}Hillshade.tif".format(raster)))
         arcpy.conversion.RasterToGeodatabase(outHillshade, arcpy.env.workspace)
+        print("Hillshade Generado")
+    #Slope
+        outSlope = Slope(raster, "DEGREE")
+        arcpy.conversion.RasterToGeodatabase(outSlope, arcpy.env.workspace)
+        print("Slope Generado")
+
+
 
         # elif "DEM" in feature:
         #     pass
