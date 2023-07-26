@@ -42,18 +42,18 @@ for capa in feature_classes:
         DEM = TopoToRaster([inContours])
         # DEM.save(os.path.join(ruta_de_datos, "{}.tif".format(feature)))
         arcpy.conversion.RasterToGeodatabase(DEM, arcpy.env.workspace)
-#Una vez creado el DEM, creamos el Hillshade y Slope
-    #Hillshade
-    rasters = arcpy.ListRasters("*", "All")
-    for raster in rasters:
-        outHillshade = Hillshade(raster)
-        # outHillshade.save(os.path.join(ruta_de_datos, "{}Hillshade.tif".format(raster)))
-        arcpy.conversion.RasterToGeodatabase(outHillshade, arcpy.env.workspace)
-        print("Hillshade Generado")
-    #Slope
-        outSlope = Slope(raster, "DEGREE")
-        arcpy.conversion.RasterToGeodatabase(outSlope, arcpy.env.workspace)
-        print("Slope Generado")
+# Una vez creado el DEM, creamos el Hillshade y Slope
+# Hillshade
+rasters = set(arcpy.ListRasters("*", "All"))
+for raster in rasters:
+    outHillshade = Hillshade(raster)
+    arcpy.conversion.RasterToGeodatabase(outHillshade, arcpy.env.workspace)
+    print("Hillshade Generado")
+    # Slope
+    outSlope = Slope(raster, "DEGREE")
+    arcpy.conversion.RasterToGeodatabase(outSlope, arcpy.env.workspace)
+    print("Slope Generado")
+
 
 
 
