@@ -49,7 +49,7 @@ if arcpy.Exists(output_dem_path):
     print(f"Raster guardado como {output_dem_path}")
 
 # Convertir el raster a geodatabase
-arcpy.conversion.RasterToGeodatabase(DEM, miGDB)
+# arcpy.conversion.RasterToGeodatabase(DEM, miGDB)
 
 
 # Una vez creado el DEM, creamos el Hillshade y Slope
