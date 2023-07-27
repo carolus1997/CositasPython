@@ -27,7 +27,12 @@ for capa in feature_classes:
             arcpy.CheckOutExtension("Spatial")
             inContours = TopoContour([[capa, field_names[indice]]])
             DEM = TopoToRaster([inContours])
-            arcpy.conversion.RasterToGeodatabase(DEM, arcpy.env.workspace, "DEM_" + field_names[indice])
+            try:
+                arcpy.conversion.RasterToGeodatabase(DEM, arcpy.env.workspace)
+            except arcpy.ExecuteError:
+                print(arcpy.GetMessages(2))
+
+            # arcpy.conversion.RasterToGeodatabase(DEM, arcpy.env.workspace, "DEM_" + field_names[indice])
             print("DEM Created")
 
 # OBTENER Y MOSTRAR RASTERS
@@ -36,7 +41,7 @@ print("Rasters: ", rasters)
 
 # CREAR HILLSHADES Y SLOPES
 for raster in rasters:
-    if "DEM" in raster:
+    if "Topo" in raster:
         # Eliminar el hillshade antiguo si existe
         arcpy.Delete_management("Hillshade_" + raster, "")
         # Crear el hillshade nuevo
