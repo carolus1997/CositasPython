@@ -37,14 +37,14 @@ for capa in feature_classes:
     indices_field = input("Elige el campo que representa la elevación (índices separados por comas): ")
     # Convertir los índices a enteros
     indices_campos_uso = [int(indice.strip()) for indice in indices_field.split(',')]
-    for indice in indices_campos_uso:
-        inContours = TopoContour([[feature, field_names[indice]]])
-        DEM = TopoToRaster([inContours])
-        # DEM.save(os.path.join(ruta_de_datos, "{}.tif".format(feature)))
-        arcpy.conversion.RasterToGeodatabase(DEM, arcpy.env.workspace)
+for indice in indices_campos_uso:
+    inContours = TopoContour([[feature, field_names[indice]]])
+    DEM = TopoToRaster([inContours])
+    # DEM.save(os.path.join(ruta_de_datos, "{}.tif".format(feature)))
+    arcpy.conversion.RasterToGeodatabase(DEM, arcpy.env.workspace)
 # Una vez creado el DEM, creamos el Hillshade y Slope
 # Hillshade
-rasters = set(arcpy.ListRasters("*", "All"))
+rasters = arcpy.ListRasters("*", "All")
 for raster in rasters:
     outHillshade = Hillshade(raster)
     arcpy.conversion.RasterToGeodatabase(outHillshade, arcpy.env.workspace)
@@ -54,17 +54,6 @@ for raster in rasters:
     arcpy.conversion.RasterToGeodatabase(outSlope, arcpy.env.workspace)
     print("Slope Generado")
 
-
-
-
-        # elif "DEM" in feature:
-        #     pass
-        #     # Realizar operaciones para DEM
-        #     # TODO: Agregar código para procesar datos DEM
-
-        # else:
-        #     pass
-        #     print(f"Se omitió {feature}.")
 print("Procesamiento completado.")
 
             
