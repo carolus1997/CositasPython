@@ -40,20 +40,32 @@ for capa in feature_classes:
 for indice in indices_campos_uso:
     inContours = TopoContour([[feature, field_names[indice]]])
     DEM = TopoToRaster([inContours])
-    # DEM.save(os.path.join(ruta_de_datos, "{}.tif".format(feature)))
-    arcpy.conversion.RasterToGeodatabase(DEM, arcpy.env.workspace)
+    output_dem_name = f"{feature}_DEM"
+    output_dem_path = os.path.join(miGDB, output_dem_name)
+    DEM.save(os.path.join(ruta_de_datos,"{}.tif".format(output_dem_name)))
+
+# Compruebe que el raster se ha guardado correctamente
+if arcpy.Exists(output_dem_path):
+    print(f"Raster guardado como {output_dem_path}")
+
+# Convertir el raster a geodatabase
+arcpy.conversion.RasterToGeodatabase(DEM, miGDB)
+
+
 # Una vez creado el DEM, creamos el Hillshade y Slope
 # Hillshade
-rasters = arcpy.ListRasters("*", "All")
+rasters = [r for r in arcpy.ListRasters("*", "All") if r == output_dem_name]
 for raster in rasters:
     outHillshade = Hillshade(raster)
-    arcpy.conversion.RasterToGeodatabase(outHillshade, arcpy.env.workspace)
+    arcpy.conversion.RasterToGeodatabase(outHillshade, miGDB)
     print("Hillshade Generado")
+
     # Slope
     outSlope = Slope(raster, "DEGREE")
-    arcpy.conversion.RasterToGeodatabase(outSlope, arcpy.env.workspace)
+    arcpy.conversion.RasterToGeodatabase(outSlope, miGDB)
     print("Slope Generado")
 
 print("Procesamiento completado.")
+
 
             
