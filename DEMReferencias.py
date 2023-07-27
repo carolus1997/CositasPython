@@ -3,8 +3,8 @@ import os
 from arcpy.sa import *
 arcpy.env.overwriteOutput = True
 # Establecer el espacio de trabajo
-miGDB=r"C:\Users\carlos.mira-perceval\OneDrive - ESRI ESPAÑA Soluciones Geoespaciales S.L\Documentos\ArcGIS\Projects\Demos_Cursos\CurvasNivel\CurvasNivelPruebaDEM.gdb"
-ruta_de_datos=r"C:\Users\carlos.mira-perceval\OneDrive - ESRI ESPAÑA Soluciones Geoespaciales S.L\Documentos\ArcGIS\Projects\Demos_Cursos\CurvasNivel"
+miGDB=r"C:\Users\carlos.mira-perceval\OneDrive - ESRI ESPAÑA Soluciones Geoespaciales S.L\Documentos\ArcGIS\Projects\Demos_Cursos\DatosIncendios\CartoBasePrueba.gdb"
+ruta_de_datos=r"C:\Users\carlos.mira-perceval\OneDrive - ESRI ESPAÑA Soluciones Geoespaciales S.L\Documentos\ArcGIS\Projects\Demos_Cursos\DatosIncendios"
 arcpy.env.workspace = miGDB
 
 # Obtener una lista de todas las clases de entidades en el espacio de trabajo
@@ -31,12 +31,13 @@ else:
 # Obtener los nombres de los campos en la clase de entidad fusionada
 feature_classes = arcpy.ListFeatureClasses()
 for capa in feature_classes:
-    field_names = [f.name for f in arcpy.ListFields(capa)]
-    for index, field in enumerate(field_names):
-        print(f'[{index}] {field} ')
-    indices_field = input("Elige el campo que representa la elevación (índices separados por comas): ")
-    # Convertir los índices a enteros
-    indices_campos_uso = [int(indice.strip()) for indice in indices_field.split(',')]
+    if "CurvasNivelTotal" in capa:
+        field_names = [f.name for f in arcpy.ListFields(capa)]
+        for index, field in enumerate(field_names):
+            print(f'[{index}] {field} ')
+        indices_field = input("Elige el campo que representa la elevación (índices separados por comas): ")
+        # Convertir los índices a enteros
+        indices_campos_uso = [int(indice.strip()) for indice in indices_field.split(',')]
 for indice in indices_campos_uso:
     inContours = TopoContour([[feature, field_names[indice]]])
     DEM = TopoToRaster([inContours])
@@ -44,27 +45,23 @@ for indice in indices_campos_uso:
     output_dem_path = os.path.join(miGDB, output_dem_name)
     DEM.save(os.path.join(ruta_de_datos,"{}.tif".format(output_dem_name)))
 
-# Compruebe que el raster se ha guardado correctamente
-if arcpy.Exists(output_dem_path):
-    print(f"Raster guardado como {output_dem_path}")
-
-# Convertir el raster a geodatabase
-# arcpy.conversion.RasterToGeodatabase(DEM, miGDB)
-
-
 # Una vez creado el DEM, creamos el Hillshade y Slope
 # Hillshade
-rasters = [r for r in arcpy.ListRasters("*", "All") if r == output_dem_name]
+arcpy.env.workspace = ruta_de_datos
+rasters = arcpy.ListRasters("*", "All")
 for raster in rasters:
+    print(raster)
     outHillshade = Hillshade(raster)
-    arcpy.conversion.RasterToGeodatabase(outHillshade, miGDB)
+    outHillshade.save(os.path.join(ruta_de_datos, "Hillshade_.tif"))
     print("Hillshade Generado")
 
     # Slope
     outSlope = Slope(raster, "DEGREE")
-    arcpy.conversion.RasterToGeodatabase(outSlope, miGDB)
+    outSlope.save(os.path.join(ruta_de_datos, "Slope.tif"))
     print("Slope Generado")
-
+rasters = arcpy.ListRasters("*", "All")
+rasters_string = ";".join(rasters)
+arcpy.conversion.RasterToGeodatabase(rasters_string, "CartoBasePrueba.gdb")
 print("Procesamiento completado.")
 
 

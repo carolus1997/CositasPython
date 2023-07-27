@@ -72,4 +72,4 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
         print("Elementos copiados en la gdb")
 
 
-config = gestionar_gdb(r"C:\Users\carlos.mira-perceval\OneDrive - ESRI ESPAÑA Soluciones Geoespaciales S.L\Documentos\ArcGIS\Projects\Demos_Cursos\CurvasNivel","CurvasNivelPruebaDEM")
+config = gestionar_gdb(r"C:\Users\carlos.mira-perceval\OneDrive - ESRI ESPAÑA Soluciones Geoespaciales S.L\Documentos\ArcGIS\Projects\Demos_Cursos\DatosIncendios","CartoBasePrueba")
