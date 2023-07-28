@@ -1,6 +1,7 @@
 import arcpy
 import os
 from arcpy.sa import *
+from arcpy import env
 # Esta función permite, con una ruta y un nombre de una gdb, poder gestionar de primeras la creación y población de una gdb si la necesitamos
 
 
@@ -33,7 +34,6 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
                 indices_capas_uso = [int(indice.strip())
                                      for indice in indices_capas.split(',')]
 
-                
                 lista_path = []
                 for indice in indices_capas_uso:
                     capa = featureclasses[indice].replace('.shp', '')
@@ -85,31 +85,85 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
 
     # Momento de evaluar la presencia de rasters en la carpeta de datos
     arcpy.env.workspace = ruta_datos
-    nombreGDB=os.path.join(ruta_datos,"{}.gdb".format(nombre_gdb))
+    nombreGDB = "{}.gdb".format(nombre_gdb)
     print("Evaluemos los rasters")
     rasters = arcpy.ListRasters("*", "All")
     print(rasters)
-    if len(rasters)==0:
+    if len(rasters) == 0:
         print("No tienes rasters en tu carpeta")
-    elif len(rasters)==1:
+    elif len(rasters) == 1:
         print("Solo hay un raster:{}".format(rasters))
-        pregunta1raster= input("Quieres introducir {} en la gdb? ".format(rasters))
+        pregunta1raster = input(
+            "Quieres introducir {} en la gdb? ".format(rasters))
         if pregunta1raster == "SI":
             for raster in rasters:
-                arcpy.env.workspace = nombreGDB
-                raster_obj = arcpy.Raster(raster)
-                arcpy.conversion.RasterToGeodatabase("{}".format(raster), "{}.gdb".format(nombre_gdb))
+                raster_obj = "{}".format(raster)
+                arcpy.conversion.RasterToGeodatabase(
+                    raster_obj, "{}.gdb".format(nombre_gdb))
                 print("Raster importado a la gdb")
         else:
             pass
+    elif len(rasters) > 1:
+        print("En tu carpeta de datos hay {} rasters, y son:{}".format(
+            len(rasters), rasters))
+        pregunta2raster = input("Quieres introducir algun raster en la gdb? ")
+        if pregunta2raster == "SI":
+            for index, feature in enumerate(rasters):
+                print(f'[{index}] {feature} ')
+            indices_raster = input(
+                'Introduce los índices de los raster que quieres usar, separados por comas: ')
+            indices_rasters_uso = [int(indice.strip())
+                                   for indice in indices_raster.split(',')]
+            # Recogemos los rasters correspondientes a los índices.
+            rasters_uso = [rasters[indice] for indice in indices_rasters_uso]
+            # Unimos los nombres de los rasters con ";"
+            rasters_string = ";".join(rasters_uso)
+            print(rasters_string)
+            arcpy.conversion.RasterToGeodatabase("{}".format(rasters_string), "{}.gdb".format(nombre_gdb))
 
-    elif len(rasters)>1:
-        indices_raster = input(
-            'Introduce los índices de los raster que quieres usar, separados por comas: ')
-        indices_rasters_uso = [int(indice.strip())
-                             for indice in indices_raster.split(',')]
-        rasters_string = ";".join(indices_rasters_uso)
-        arcpy.conversion.RasterToGeodatabase(rasters_string, nombre_gdb)
+    # Momento de evaluar la presencia de rasters no proyectados en la gdb
+    arcpy.env.workspace = mi_gdb
+
+    # rasters con sistema de coordenadas
+    rasters_with_coordinates = []
+
+    # Rasters sin un sistema de coordenadas
+    rasters_without_coordinates = []
+
+    # Lista de los nombres de los rasters en la geodatabase
+    raster_list = arcpy.ListRasters()
+
+    for raster in raster_list:
+        # Obtiene el spatialReference del raster actual
+        raster_sr = arcpy.Describe(raster).spatialReference
+
+        if raster_sr.name == 'Unknown':
+            # Agregar el raster a la lista de rasters sin un sistema de coordenadas
+            rasters_without_coordinates.append(raster)
+        else:
+            # Agregar el raster a la lista de rasters con un sistema de coordenadas
+            rasters_with_coordinates.append(raster)
 
 
-config = gestionar_gdb(r"C:\Users\usuario\Documents\ArcGIS\Projects\Pythoneo\Data\BTN", "Colomera")
+    # Comif we didn't find any raster with coordinates, print a message and exit
+    if len(rasters_with_coordinates) == 0:
+        print("No se encontró ningún raster con un sistema de coordenadas.")
+        return
+
+
+    # Sistema de coordenadas del primer raster que tiene uno
+    spatial_ref = arcpy.Describe(rasters_with_coordinates[0]).spatialReference
+
+    # Si solo hay un raster sin un sistema de coordenadas, se lo proyectamos
+    if len(rasters_without_coordinates) == 1:
+        out_raster = rasters_without_coordinates[0] + "_projected"
+        arcpy.DefineProjection_management(rasters_without_coordinates[0], spatial_ref)
+    elif len(rasters_without_coordinates) > 1:
+        for raster in rasters_without_coordinates:
+            out_raster = raster + "_projected"
+            arcpy.DefineProjection_management(raster, spatial_ref)
+
+
+config = gestionar_gdb(
+    r"C:\Users\usuario\Documents\ArcGIS\Projects\Pythoneo\Data\BTN", "Colomera")
+ 
