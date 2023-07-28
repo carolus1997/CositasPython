@@ -33,7 +33,7 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
                 indices_capas_uso = [int(indice.strip())
                                      for indice in indices_capas.split(',')]
 
-                lista_names = []
+                
                 lista_path = []
                 for indice in indices_capas_uso:
                     capa = featureclasses[indice].replace('.shp', '')
@@ -85,9 +85,25 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
 
     # Momento de evaluar la presencia de rasters en la carpeta de datos
     arcpy.env.workspace = ruta_datos
+    nombreGDB=os.path.join(ruta_datos,"{}.gdb".format(nombre_gdb))
     print("Evaluemos los rasters")
     rasters = arcpy.ListRasters("*", "All")
-    if len(rasters)>1:
+    print(rasters)
+    if len(rasters)==0:
+        print("No tienes rasters en tu carpeta")
+    elif len(rasters)==1:
+        print("Solo hay un raster:{}".format(rasters))
+        pregunta1raster= input("Quieres introducir {} en la gdb? ".format(rasters))
+        if pregunta1raster == "SI":
+            for raster in rasters:
+                arcpy.env.workspace = nombreGDB
+                raster_obj = arcpy.Raster(raster)
+                arcpy.conversion.RasterToGeodatabase("{}".format(raster), "{}.gdb".format(nombre_gdb))
+                print("Raster importado a la gdb")
+        else:
+            pass
+
+    elif len(rasters)>1:
         indices_raster = input(
             'Introduce los índices de los raster que quieres usar, separados por comas: ')
         indices_rasters_uso = [int(indice.strip())
@@ -96,5 +112,4 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
         arcpy.conversion.RasterToGeodatabase(rasters_string, nombre_gdb)
 
 
-config = gestionar_gdb(
-    r"C:\Users\usuario\Documents\ArcGIS\Projects\Pythoneo\Data", "Colomera")
+config = gestionar_gdb(r"C:\Users\usuario\Documents\ArcGIS\Projects\Pythoneo\Data\BTN", "Colomera")
