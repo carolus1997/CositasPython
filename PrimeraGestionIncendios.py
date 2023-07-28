@@ -2,6 +2,7 @@ import arcpy
 import os
 from arcpy.sa import *
 from arcpy import env
+arcpy.env.overwriteOutput = True
 # Esta función permite, con una ruta y un nombre de una gdb, poder gestionar de primeras la creación y población de una gdb si la necesitamos
 
 
@@ -9,7 +10,7 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
     carpeta_datos_shp = ruta_datos
     mi_gdb = os.path.join(carpeta_datos_shp, "{}.gdb".format(nombre_gdb))
     print(mi_gdb)
-
+    arcpy.env.overwriteOutput = True
     if arcpy.Exists(mi_gdb):
         print("Tu gdb ya existe")
         vaciado = input(
@@ -121,6 +122,65 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
             print(rasters_string)
             arcpy.conversion.RasterToGeodatabase("{}".format(rasters_string), "{}.gdb".format(nombre_gdb))
 
+    #CARTORASTER BASE
+    # Obtener una lista de todas las clases de entidades en el espacio de trabajo
+    feature_classes = arcpy.ListFeatureClasses()
+    print(feature_classes)
+
+    # Para datos vectoriales
+    # Lista para guardar las capas para fusionar
+    layers_to_merge = []
+    for feature in feature_classes:
+        if "NIV" in feature or "contour" in feature: #Aqui hay que añadir que tiene que poner cual es el elemento que más se repite en sus curvas de nivel
+            # Agrega la capa a la lista de capas para fusionar
+            layers_to_merge.append(feature)
+
+    # Fusiona las capas después de que todas las capas hayan sido agregadas a la lista
+    if len(layers_to_merge)>1:
+        output_layer = os.path.join(mi_gdb,"CurvasNivelTotal") # Cambia esto a la ruta de salida que desees
+        arcpy.Merge_management(layers_to_merge, output_layer)
+        print("Curvas de nivel combinadas")
+    else:
+        output_layer = os.path.join(mi_gdb, "CurvasNivelTotal")
+        print("Solo hay una capa")
+
+    indices_campos_uso=[]
+    # Obtener los nombres de los campos en la clase de entidad fusionada
+    feature_classes = arcpy.ListFeatureClasses()
+    for capa in feature_classes:
+        if "CurvasNivelTotal" in capa:
+            field_names = [f.name for f in arcpy.ListFields(capa)]
+            for index, field in enumerate(field_names):
+                print(f'[{index}] {field} ')
+            indices_field = input("Elige el campo que representa la elevación (índices separados por comas): ")
+            # Convertir los índices a enteros
+            indices_campos_uso = [int(indice.strip()) for indice in indices_field.split(',')]
+    for indice in indices_campos_uso:
+        inContours = TopoContour([[feature, field_names[indice]]])
+        DEM = TopoToRaster([inContours])
+        output_dem_name = f"{feature}_DEM"
+        output_dem_path = os.path.join(mi_gdb, output_dem_name)
+        DEM.save(os.path.join(ruta_datos,"{}.tif".format(output_dem_name)))
+
+    # Una vez creado el DEM, creamos el Hillshade y Slope
+    # Hillshade
+    arcpy.env.workspace = ruta_datos
+    rasters = arcpy.ListRasters("*", "All")
+    for raster in rasters:
+        print(raster)
+        outHillshade = Hillshade(raster)
+        outHillshade.save(os.path.join(ruta_datos, "Hillshade.tif"))
+        print("Hillshade Generado")
+
+        # Slope
+        outSlope = Slope(raster, "DEGREE")
+        outSlope.save(os.path.join(ruta_datos, "Slope.img"))
+        print("Slope Generado")
+    rasters = arcpy.ListRasters("*", "All")
+    rasters_string = ";".join(rasters)
+    print("La lista de rasters a importar es: {}".format(rasters_string))
+    arcpy.conversion.RasterToGeodatabase("{}".format(rasters_string), "{}.gdb".format(nombre_gdb))
+
     # Momento de evaluar la presencia de rasters no proyectados en la gdb
     arcpy.env.workspace = mi_gdb
 
@@ -162,8 +222,12 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
         for raster in rasters_without_coordinates:
             out_raster = raster + "_projected"
             arcpy.DefineProjection_management(raster, spatial_ref)
+    
+    print("Procesamiento completado.")
 
 
 config = gestionar_gdb(
     r"C:\Users\usuario\Documents\ArcGIS\Projects\Pythoneo\Data\BTN", "Colomera")
  
+
+
