@@ -52,14 +52,14 @@ rasters = arcpy.ListRasters("*", "All")
 for raster in rasters:
     print(raster)
     outHillshade = Hillshade(raster)
-    outHillshade.save(os.path.join(ruta_de_datos, "Hillshade_.tif"))
+    outHillshade.save(os.path.join(ruta_de_datos, "Hillshade.tif"))
     print("Hillshade Generado")
 
     # Slope
     outSlope = Slope(raster, "DEGREE")
     outSlope.save(os.path.join(ruta_de_datos, "Slope.tif"))
     print("Slope Generado")
-rasters = arcpy.ListRasters("*", "All")
+rasters = arcpy.ListRasters("*", "GRID")
 rasters_string = ";".join(rasters)
 arcpy.conversion.RasterToGeodatabase(rasters_string, "CartoBasePrueba.gdb")
 print("Procesamiento completado.")
