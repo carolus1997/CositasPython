@@ -130,6 +130,7 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
     # Para datos vectoriales
     # Lista para guardar las capas para fusionar
     layers_to_merge = []
+    indices_campos_uso = []
     for feature in feature_classes:
         if "NIV" in feature or "contour" in feature: #Aqui hay que añadir que tiene que poner cual es el elemento que más se repite en sus curvas de nivel
             # Agrega la capa a la lista de capas para fusionar
@@ -140,12 +141,33 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
         output_layer = os.path.join(mi_gdb,"CurvasNivelTotal") # Cambia esto a la ruta de salida que desees
         arcpy.Merge_management(layers_to_merge, output_layer)
         print("Curvas de nivel combinadas")
-    else:
-        output_layer = os.path.join(mi_gdb, "CurvasNivelTotal")
-        print("Solo hay una capa")
 
-    indices_campos_uso=[]
+    else:
+        print("Solo hay una capa disponible")
+        preguntaDEM1= input("¿Quieres generar un DEM a partir de tus curvas de nivel? ")
+        if preguntaDEM1 =="SI":
+            arcpy.env.workspace = mi_gdb
+            feature_classes = arcpy.ListFeatureClasses()
+            for capa in feature_classes:
+                print(feature_classes)
+                print(layers_to_merge)
+                if (capa +".shp") in layers_to_merge :
+                    field_names = [f.name for f in arcpy.ListFields(capa)]
+                    for index, field in enumerate(field_names):
+                        print(f'[{index}] {field} ')
+                    indices_field = input("Elige el campo que representa la elevación (índices separados por comas): ")
+                    # Convertir los índices a enteros
+                    indices_campos_uso = [int(indice.strip()) for indice in indices_field.split(',')]
+                    for indice in indices_campos_uso:
+                        inContours = TopoContour([[capa, field_names[indice]]])
+                        DEM = TopoToRaster([inContours])
+                        output_dem_name = f"{capa}_DEM"
+                        output_dem_path = os.path.join(mi_gdb, output_dem_name)
+                        DEM.save(os.path.join(ruta_datos, "{}.tif".format(output_dem_name)))
+
+    indices_campos_uso = []
     # Obtener los nombres de los campos en la clase de entidad fusionada
+    arcpy.env.workspace = ruta_datos
     feature_classes = arcpy.ListFeatureClasses()
     for capa in feature_classes:
         if "CurvasNivelTotal" in capa:
@@ -160,8 +182,7 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
         DEM = TopoToRaster([inContours])
         output_dem_name = f"{feature}_DEM"
         output_dem_path = os.path.join(mi_gdb, output_dem_name)
-        DEM.save(os.path.join(ruta_datos,"{}.tif".format(output_dem_name)))
-
+        DEM.save(os.path.join(ruta_datos, "{}.tif".format(output_dem_name)))
     # Una vez creado el DEM, creamos el Hillshade y Slope
     # Hillshade
     arcpy.env.workspace = ruta_datos
@@ -227,7 +248,7 @@ def gestionar_gdb(ruta_datos, nombre_gdb):
 
 
 config = gestionar_gdb(
-    r"C:\Users\usuario\Documents\ArcGIS\Projects\Pythoneo\Data\BTN", "Colomera")
+    r"C:\Users\carlos.mira-perceval\OneDrive - ESRI ESPAÑA Soluciones Geoespaciales S.L\Documentos\ArcGIS\Projects\Demos_Cursos\Taull", "Taull")
  
 
 
